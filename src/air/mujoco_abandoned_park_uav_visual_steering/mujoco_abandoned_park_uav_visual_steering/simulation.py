@@ -72,6 +72,7 @@ class UavSimulation:
         if self.body_id < 0 or self.camera_id < 0:
             raise ValueError("Required UAV body or camera is absent / 缺少无人机机体或相机")
         self._yaw_radians = 0.0
+        self._renderer: mujoco.Renderer | None = None
         self.reset()
 
     @property
@@ -122,6 +123,35 @@ class UavSimulation:
             "yaw_radians": float(self._yaw_radians),
         }
 
+    def capture_rgb(self) -> np.ndarray:
+        """Capture the forward camera as RGB uint8 / 以 RGB uint8 捕获前视相机。"""
+        if self._renderer is None:
+            self._renderer = mujoco.Renderer(
+                self.model,
+                height=self.config.render_height,
+                width=self.config.render_width,
+            )
+        self._renderer.update_scene(self.data, camera=self.camera_id)
+        frame = self._renderer.render()
+        expected_shape = (self.config.render_height, self.config.render_width, 3)
+        if frame.shape != expected_shape or frame.dtype != np.uint8:
+            raise RuntimeError(
+                f"Unexpected RGB frame / RGB 图像规格异常: {frame.shape}, {frame.dtype}"
+            )
+        return frame.copy()
+
+    def close(self) -> None:
+        """Release rendering resources / 释放渲染资源。"""
+        if self._renderer is not None:
+            self._renderer.close()
+            self._renderer = None
+
+    def __enter__(self) -> "UavSimulation":
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        self.close()
+
     def _write_yaw_quaternion(self) -> None:
         half = self._yaw_radians / 2.0
         self.data.qpos[3:7] = (np.cos(half), 0.0, 0.0, np.sin(half))
@@ -152,4 +182,5 @@ def _float_tuple(value: Any, name: str, length: int) -> tuple[float, ...]:
         return tuple(float(item) for item in value)
     except (TypeError, ValueError) as error:
         raise ValueError(f"{name} contains a non-number / {name} 含有非数值项") from error
+
 
