@@ -22,9 +22,18 @@ The module targets low-altitude flight along a tree-lined path. MuJoCo 3.12.0 pr
 cd src/air/mujoco_abandoned_park_uav_visual_steering
 python -m pip install -r requirements.txt
 python main.py --steps 120 --steering 0.0
+python main.py --mode collect --output data/park_rgb
+python main.py --mode quality --output data/park_rgb
 python -m pytest tests -q
 ```
 
 成功运行后，入口输出包含状态、随机种子、步数、位置和航向角的 JSON 记录。The successful entry-point output is a JSON record containing status, seed, step count, position, and yaw.
+
+## 数据集 / Dataset
+
+前视相机生成 RGB8 PNG 图像。确定性专家根据路径中心偏差和航向误差产生连续转向量，并映射为 `LEFT`、`STRAIGHT`、`RIGHT` 和 `STOP` 标签。数据按回合划分为训练集、验证集和测试集，固定种子保证划分可复现。质量报告检查图像可读性、路径完整性、SHA-256 哈希、标签覆盖及回合泄漏。
+
+The forward camera produces RGB8 PNG images. A deterministic expert converts path-center and heading errors into continuous steering and `LEFT`, `STRAIGHT`, `RIGHT`, or `STOP` labels. Whole episodes are assigned to train, validation, and test splits with a fixed seed. The quality report checks image readability, path integrity, SHA-256 hashes, label coverage, and episode leakage.
+
 
 

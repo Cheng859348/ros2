@@ -31,6 +31,19 @@ The unified entry point runs a complete deterministic simulation episode and pri
 python main.py --steps 120 --steering 0.0
 ```
 
+Collect the reproducible RGB dataset and rerun its quality gate:
+
+采集可复现 RGB 数据集并重新执行质量检查：
+
+```bash
+python main.py --mode collect --output data/park_rgb
+python main.py --mode quality --output data/park_rgb
+```
+
+The collector writes PNG frames, `metadata.csv`, `manifest.json`, and `quality_report.json`. Splits are assigned by episode to prevent adjacent frames from leaking across training, validation, and test sets. Generated data remains outside version control.
+
+采集器写出 PNG 图像、`metadata.csv`、`manifest.json` 和 `quality_report.json`。数据按完整回合划分，避免相邻帧跨越训练集、验证集和测试集。生成数据不纳入版本控制。
+
 Run the checks with:
 
 执行检查：
@@ -52,5 +65,6 @@ python -m pytest tests -q
 The path extends along positive Y. Positive normalized steering turns the vehicle to its right and negative steering turns left. The camera output contract is RGB8 at 320 x 180. Paths are resolved relative to `main.py`, so the command does not depend on the caller's working directory.
 
 步道沿 Y 轴正方向延伸。正归一化转向量使无人机右转，负值使其左转。相机输出接口为 320 x 180 的 RGB8 图像。所有路径均相对 `main.py` 解析，因此运行命令不依赖调用者的工作目录。
+
 
 

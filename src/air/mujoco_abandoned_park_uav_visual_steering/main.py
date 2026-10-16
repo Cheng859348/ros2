@@ -11,7 +11,13 @@ from pathlib import Path
 MODULE_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(MODULE_ROOT))
 
-from mujoco_abandoned_park_uav_visual_steering import SimulationConfig, UavSimulation
+from mujoco_abandoned_park_uav_visual_steering import (  # noqa: E402
+    DatasetConfig,
+    SimulationConfig,
+    UavSimulation,
+    collect_dataset,
+    inspect_dataset,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -23,10 +29,28 @@ def build_parser() -> argparse.ArgumentParser:
         )
     )
     parser.add_argument(
+        "--mode",
+        choices=("simulation", "collect", "quality"),
+        default="simulation",
+        help="runtime mode / 运行模式",
+    )
+    parser.add_argument(
         "--config",
         type=Path,
         default=MODULE_ROOT / "config" / "simulation.yaml",
         help="simulation YAML / 仿真 YAML 配置",
+    )
+    parser.add_argument(
+        "--dataset-config",
+        type=Path,
+        default=MODULE_ROOT / "config" / "dataset.yaml",
+        help="dataset YAML / 数据集 YAML 配置",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=MODULE_ROOT / "data" / "park_rgb",
+        help="dataset output directory / 数据集输出目录",
     )
     parser.add_argument(
         "--model",
@@ -54,6 +78,19 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         config = SimulationConfig.from_yaml(args.config.resolve())
+        if args.mode == "collect":
+            quality = collect_dataset(
+                config,
+                DatasetConfig.from_yaml(args.dataset_config.resolve()),
+                args.model.resolve(),
+                args.output,
+            )
+            print(json.dumps(quality, ensure_ascii=False, sort_keys=True))
+            return 0 if quality["status"] == "passed" else 3
+        if args.mode == "quality":
+            quality = inspect_dataset(args.output.resolve())
+            print(json.dumps(quality, ensure_ascii=False, sort_keys=True))
+            return 0 if quality["status"] == "passed" else 3
         simulation = UavSimulation(args.model.resolve(), config)
         for _ in range(args.steps):
             simulation.step(args.steering)
@@ -89,5 +126,4 @@ def _unit_float(text: str) -> float:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
 

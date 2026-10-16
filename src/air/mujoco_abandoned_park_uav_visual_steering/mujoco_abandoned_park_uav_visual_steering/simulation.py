@@ -183,4 +183,3 @@ def _float_tuple(value: Any, name: str, length: int) -> tuple[float, ...]:
     except (TypeError, ValueError) as error:
         raise ValueError(f"{name} contains a non-number / {name} 含有非数值项") from error
 
-

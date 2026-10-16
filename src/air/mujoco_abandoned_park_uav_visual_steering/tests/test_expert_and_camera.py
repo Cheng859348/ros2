@@ -10,7 +10,7 @@ import numpy as np
 MODULE_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(MODULE_ROOT))
 
-from mujoco_abandoned_park_uav_visual_steering import (
+from mujoco_abandoned_park_uav_visual_steering import (  # noqa: E402
     PathCenterExpert,
     SimulationConfig,
     SteeringLabel,

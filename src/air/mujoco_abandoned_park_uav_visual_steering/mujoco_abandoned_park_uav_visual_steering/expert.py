@@ -75,4 +75,3 @@ class PathCenterExpert:
             label = SteeringLabel.STRAIGHT
         return ExpertDecision(steering, label, lateral_error, heading_error)
 
-
