@@ -45,3 +45,22 @@ def test_checkpoint_contains_four_class_contract(tmp_path: Path) -> None:
     assert tuple(loaded.labels) == ("LEFT", "STRAIGHT", "RIGHT", "STOP")
     assert loaded(torch.zeros((2, 3, 90, 160))).shape == (2, 4)
 
+
+def test_replay_directory_reports_frame_count(tmp_path: Path) -> None:
+    torch = pytest.importorskip("torch")
+    from PIL import Image
+    sys.path.insert(0, str(MODULE_ROOT / "mujoco_abandoned_park_uav_visual_steering"))
+    from model import LightweightSteeringCNN
+    from ros_node import replay_directory
+
+    model = LightweightSteeringCNN()
+    checkpoint = tmp_path / "checkpoint.pt"
+    torch.save({"state_dict": model.state_dict(), "image_height": 90, "image_width": 160}, checkpoint)
+    images = tmp_path / "images"
+    images.mkdir()
+    for index in range(3):
+        Image.new("RGB", (320, 180), color=(index * 30, 80, 120)).save(images / f"frame_{index}.png")
+    report = replay_directory(checkpoint, images)
+    assert report["frames"] == 3
+    assert sum(report["labels"].values()) == 3
+
