@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import math
 
 from navigation import Cell, OccupancyGrid
+from neural_navigation import NeuralAction, NeuralPlanner
 
 
 @dataclass(frozen=True)
@@ -57,3 +58,15 @@ class IncrementalSlam:
     def _cell(self, x: float, y: float) -> Cell:
         return (int(round(x / self.cell_size)) + self.grid.width // 2,
                 int(round(y / self.cell_size)) + self.grid.height // 2)
+
+class SynchronizedSlamNavigation:
+    """Per-step odometry, scan integration and neural planning loop."""
+    def __init__(self, grid: OccupancyGrid, goal: Cell, cell_size: float = 0.5) -> None:
+        self.slam = IncrementalSlam(grid, cell_size)
+        self.goal = goal
+        self.planner = NeuralPlanner()
+    def step(self, dx: float, dy: float, dyaw: float, hits: list[RangeHit]) -> NeuralAction:
+        self.slam.integrate_odometry(dx, dy, dyaw)
+        self.slam.update_scan(hits)
+        current = self.slam._cell(self.slam.pose.x, self.slam.pose.y)
+        return self.planner.predict(self.slam.grid, current, self.goal)

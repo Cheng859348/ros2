@@ -87,3 +87,6 @@ On Ubuntu 22.04 with ROS 2 Humble, use the `ros2 launch` entry point. Environmen
 演示动图 / Demonstration GIF: [建图与 A* 导航](../img/air/mujoco_abandoned_park_uav_visual_steering/mapping_navigation_demo.gif)。
 
 
+### 同步 SLAM 与神经网络规划 / Synchronized SLAM and neural planning
+
+每个仿真步执行 `odometry -> range scan -> occupancy update -> MLP action`，由 `SynchronizedSlamNavigation.step` 保证建图和规划使用同一时刻的地图状态。MLP 输入局部自由空间与目标相对坐标，隐藏层使用 `tanh`，输出 LEFT/STRAIGHT/RIGHT 三类控制；A* 只用于基线对照。
