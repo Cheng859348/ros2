@@ -79,4 +79,6 @@ Ubuntu 22.04 与 ROS 2 Humble 中可执行 `ros2 launch` 启动入口；不含 R
 
 On Ubuntu 22.04 with ROS 2 Humble, use the `ros2 launch` entry point. Environments without ROS 2 can still run the simulation, keyboard, training, replay, and evaluation modes. Verification includes unit tests, `compileall`, `flake8`, and three-scenario metrics. The page is wired into `mkdocs.yml` and the homepage; run screenshots or GIF evidence belongs under `docs/img/air/mujoco_abandoned_park_uav_visual_steering/` and should be linked here.
 
+演示动图 / Demonstration GIF: [建图与 A* 导航](../img/air/mujoco_abandoned_park_uav_visual_steering/mapping_navigation_demo.gif)。
+
 
