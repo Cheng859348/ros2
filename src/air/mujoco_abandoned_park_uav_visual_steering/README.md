@@ -78,6 +78,8 @@ python -m pytest tests -q
 - `ros_node.py`, `launch/main.launch.py`: ROS 2 Humble image-to-Twist interface / ROS 2 Humble 图像转 Twist 接口
 - `evaluation.py`: straight, curve, and obstacle scenario comparison / 直道、弯道与障碍物场景对比
 - `navigation.py`: sensor occupancy mapping, A* navigation, and keyboard commands / 传感器占用建图、A* 导航与键盘控制
+- `slam.py`: incremental odometry-plus-range SLAM loop / 增量式里程计与测距融合 SLAM 闭环
+- `Dockerfile`: Ubuntu ROS 2 Humble image with CNN runtime dependencies / 含 CNN 运行依赖的 Ubuntu ROS 2 Humble 镜像
 
 ## Coordinate and command convention / 坐标与指令约定
 

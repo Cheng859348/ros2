@@ -8,7 +8,7 @@ def generate_launch_description() -> LaunchDescription:
     return LaunchDescription([
         Node(
             package="mujoco_abandoned_park_uav_visual_steering",
-            executable="ros_node.py",
+            executable="visual_steering_node",
             name="visual_steering_node",
             output="screen",
         ),

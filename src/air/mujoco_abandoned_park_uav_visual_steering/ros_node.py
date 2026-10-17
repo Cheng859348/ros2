@@ -73,9 +73,12 @@ if rclpy is not None:
 
         def __init__(self) -> None:
             super().__init__("visual_steering_node")
-            checkpoint = Path(self.declare_parameter("checkpoint", "").value)
+            checkpoint_value = str(self.declare_parameter("checkpoint", "").value).strip()
+            checkpoint = Path(checkpoint_value) if checkpoint_value else None
             self.bridge = CvBridge() if CvBridge is not None else None
             try:
+                if checkpoint is None:
+                    raise FileNotFoundError("checkpoint parameter is empty; image inference is disabled")
                 self.core = VisualSteeringCore(
                     checkpoint,
                     float(self.declare_parameter("steering_rate", 0.65).value),

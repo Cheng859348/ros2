@@ -73,6 +73,11 @@ python main.py --mode keyboard --steps 4
 
 Sensor hit points update an occupancy grid: traversed ray cells become free and the terminal hit becomes occupied. A* searches four-connected free cells with $f(n)=g(n)+h(n)$, where $h(n)$ is the Manhattan distance. The same simulated sensor trace therefore updates the map and supplies the navigation planner, providing a deterministic SLAM-style mapping-and-navigation loop.
 
+增量式 SLAM 模块进一步融合机体坐标系里程计与测距射线。位姿更新为
+$(x',y')=(x+\cos\theta\,\Delta x-\sin\theta\,\Delta y,\ y+\sin\theta\,\Delta x+\cos\theta\,\Delta y)$，并把每次扫描的末端命中投影到全局栅格，轨迹和地图同时保存。
+
+The incremental SLAM module fuses body-frame odometry with range rays. The pose update is $(x',y')=(x+\cos\theta\,\Delta x-\sin\theta\,\Delta y,\ y+\sin\theta\,\Delta x+\cos\theta\,\Delta y)$; each scan endpoint is projected into the global grid while the estimated trajectory and map are retained together.
+
 ## 启动、验证与证据 / Launch, verification, and evidence
 
 Ubuntu 22.04 与 ROS 2 Humble 中可执行 `ros2 launch` 启动入口；不含 ROS 2 的环境仍可运行 `main.py` 的仿真、键盘、训练、回放和评估模式。验证包括单元测试、`compileall`、`flake8` 和三场景指标输出。文档页面通过 `mkdocs.yml` 与首页入口发布，运行截图或 GIF 应放在 `docs/img/air/mujoco_abandoned_park_uav_visual_steering/` 并在此处引用。

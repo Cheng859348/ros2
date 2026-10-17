@@ -11,8 +11,8 @@ setup(
         ("share/mujoco_abandoned_park_uav_visual_steering", ["package.xml"]),
         ("share/mujoco_abandoned_park_uav_visual_steering/config", ["config/ros_visual_steering.yaml"]),
         ("share/mujoco_abandoned_park_uav_visual_steering/launch", ["launch/main.launch.py"]),
+        ("lib/mujoco_abandoned_park_uav_visual_steering", ["visual_steering_node"]),
     ],
     install_requires=["setuptools"],
-    scripts=["ros_node.py"],
 )
 
