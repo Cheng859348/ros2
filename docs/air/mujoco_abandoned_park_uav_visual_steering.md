@@ -59,5 +59,24 @@ The images are resized to $160\times90$ and normalized to $[0,1]$. The network u
 
 `evaluation.py` 对直道、弯道和障碍物轨迹与路径中心规则控制器进行评价，结果保存到 `evaluation/scenarios.json`，包含两种控制器的平均横向误差、成功率和标签计数。
 
+## 键盘控制与建图导航 / Keyboard control and mapping navigation
+
+键盘模式使用 `W/A/S/D` 控制前进、左转、右转和后退，`X` 发送停止指令。启动方式如下：
+
+The keyboard mode maps `W/A/S/D` to forward, left, right, and reverse commands; `X` sends a stop command:
+
+```bash
+python main.py --mode keyboard --steps 4
+```
+
+传感器命中点通过射线更新占用栅格：射线经过的单元标记为空闲，末端命中单元标记为占用；A* 仅在四邻域自由单元中搜索。设栅格代价为 $g(n)$，启发函数为曼哈顿距离 $h(n)$，优先级为 $f(n)=g(n)+h(n)$。
+
+Sensor hit points update an occupancy grid: traversed ray cells become free and the terminal hit becomes occupied. A* searches four-connected free cells with $f(n)=g(n)+h(n)$, where $h(n)$ is the Manhattan distance. The same simulated sensor trace therefore updates the map and supplies the navigation planner, providing a deterministic SLAM-style mapping-and-navigation loop.
+
+## 启动、验证与证据 / Launch, verification, and evidence
+
+Ubuntu 22.04 与 ROS 2 Humble 中可执行 `ros2 launch` 启动入口；不含 ROS 2 的环境仍可运行 `main.py` 的仿真、键盘、训练、回放和评估模式。验证包括单元测试、`compileall`、`flake8` 和三场景指标输出。文档页面通过 `mkdocs.yml` 与首页入口发布，运行截图或 GIF 应放在 `docs/img/air/mujoco_abandoned_park_uav_visual_steering/` 并在此处引用。
+
+On Ubuntu 22.04 with ROS 2 Humble, use the `ros2 launch` entry point. Environments without ROS 2 can still run the simulation, keyboard, training, replay, and evaluation modes. Verification includes unit tests, `compileall`, `flake8`, and three-scenario metrics. The page is wired into `mkdocs.yml` and the homepage; run screenshots or GIF evidence belongs under `docs/img/air/mujoco_abandoned_park_uav_visual_steering/` and should be linked here.
 
 

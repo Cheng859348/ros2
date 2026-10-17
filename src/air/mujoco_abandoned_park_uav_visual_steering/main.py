@@ -41,7 +41,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--mode",
-        choices=("simulation", "collect", "quality", "train", "replay", "evaluate"),
+        choices=("simulation", "keyboard", "collect", "quality", "train", "replay", "evaluate"),
         default="simulation",
         help="runtime mode / 运行模式",
     )
@@ -118,6 +118,16 @@ def main(argv: list[str] | None = None) -> int:
             from evaluation import evaluate
             print(json.dumps(evaluate(args.output.resolve()), ensure_ascii=False, sort_keys=True))
             return 0
+        if args.mode == "keyboard":
+            from navigation import keyboard_command
+            print("Keyboard mode / 键盘模式: W forward, A/D steer, S reverse, X stop")
+            for _ in range(args.steps):
+                key = input("key> ").strip() or "x"
+                speed, steering = keyboard_command(key)
+                simulation = UavSimulation(args.model.resolve(), config)
+                simulation.step(steering)
+                print(json.dumps({"key": key, "speed": speed, "steering": steering}, ensure_ascii=False))
+            return 0
         simulation = UavSimulation(args.model.resolve(), config)
         for _ in range(args.steps):
             simulation.step(args.steering)
@@ -153,4 +163,3 @@ def _unit_float(text: str) -> float:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

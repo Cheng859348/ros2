@@ -48,6 +48,7 @@ Train the lightweight CNN and replay frames through the same interface:
 python main.py --mode train --output data/park_rgb --checkpoint models/weights/lightweight_steering_cnn.pt --epochs 8
 python main.py --mode replay --checkpoint models/weights/lightweight_steering_cnn.pt --images data/park_rgb/images
 python main.py --mode evaluate --output evaluation/scenarios.json
+python main.py --mode keyboard --steps 4
 ```
 
 The model consumes normalized RGB tensors and predicts four classes. A predicted class is mapped to `geometry_msgs/Twist`: LEFT and RIGHT use opposite `angular.z`, STRAIGHT uses zero angular velocity, and STOP sets `linear.x` to zero.
@@ -76,12 +77,12 @@ python -m pytest tests -q
 - `train.py`, `model.py`: lightweight CNN training and checkpoint format / 轻量 CNN 训练与权重格式
 - `ros_node.py`, `launch/main.launch.py`: ROS 2 Humble image-to-Twist interface / ROS 2 Humble 图像转 Twist 接口
 - `evaluation.py`: straight, curve, and obstacle scenario comparison / 直道、弯道与障碍物场景对比
+- `navigation.py`: sensor occupancy mapping, A* navigation, and keyboard commands / 传感器占用建图、A* 导航与键盘控制
 
 ## Coordinate and command convention / 坐标与指令约定
 
 The path extends along positive Y. Positive normalized steering turns the vehicle to its right and negative steering turns left. The camera output contract is RGB8 at 320 x 180. Paths are resolved relative to `main.py`, so the command does not depend on the caller's working directory.
 
 步道沿 Y 轴正方向延伸。正归一化转向量使无人机右转，负值使其左转。相机输出接口为 320 x 180 的 RGB8 图像。所有路径均相对 `main.py` 解析，因此运行命令不依赖调用者的工作目录。
-
 
 
