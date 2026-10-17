@@ -4,9 +4,15 @@ setup(
     name="mujoco_abandoned_park_uav_visual_steering",
     version="0.2.0",
     packages=["mujoco_abandoned_park_uav_visual_steering"],
-    package_dir={"": "mujoco_abandoned_park_uav_visual_steering"},
-    data_files=[("share/ament_index/resource_index/packages", ["resource/mujoco_abandoned_park_uav_visual_steering"])],
-    entry_points={"console_scripts": ["visual_steering_node=ros_node:ros_main"]},
+    package_dir={"": "."},
+    py_modules=["evaluation", "main", "ros_node", "train"],
+    data_files=[
+        ("share/ament_index/resource_index/packages", ["resource/mujoco_abandoned_park_uav_visual_steering"]),
+        ("share/mujoco_abandoned_park_uav_visual_steering", ["package.xml"]),
+        ("share/mujoco_abandoned_park_uav_visual_steering/config", ["config/ros_visual_steering.yaml"]),
+        ("share/mujoco_abandoned_park_uav_visual_steering/launch", ["launch/main.launch.py"]),
+    ],
+    install_requires=["setuptools"],
+    scripts=["ros_node.py"],
 )
-
 

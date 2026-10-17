@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """ROS 2 image-to-Twist interface with an offline-compatible core / ROS 2 图像转控制接口。"""
 
 from __future__ import annotations
@@ -9,19 +10,27 @@ from dataclasses import dataclass
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import numpy as np
-from PIL import Image
-
-from mujoco_abandoned_park_uav_visual_steering.model import LightweightSteeringCNN
-
 try:
     import rclpy
-    from cv_bridge import CvBridge
     from geometry_msgs.msg import Twist
     from rclpy.node import Node
     from sensor_msgs.msg import Image as RosImage
 except ImportError:  # ROS 2 is optional for offline replay on Windows.
     rclpy = None
+
+try:
+    from cv_bridge import CvBridge
+except ImportError:
+    CvBridge = None
+
+try:
+    import numpy as np
+    from PIL import Image
+    from mujoco_abandoned_park_uav_visual_steering.model import LightweightSteeringCNN
+except ImportError:
+    np = None
+    Image = None
+    LightweightSteeringCNN = None
 
 
 @dataclass(frozen=True)
@@ -36,6 +45,8 @@ class VisualSteeringCore:
     """Pure-Python inference core shared by rclpy and replay tests."""
 
     def __init__(self, checkpoint: Path, steering_rate: float = 0.65) -> None:
+        if Image is None or LightweightSteeringCNN is None:
+            raise RuntimeError("Pillow and PyTorch are required for image inference")
         import torch
 
         self.torch = torch
@@ -63,16 +74,23 @@ if rclpy is not None:
         def __init__(self) -> None:
             super().__init__("visual_steering_node")
             checkpoint = Path(self.declare_parameter("checkpoint", "").value)
-            if not checkpoint.is_file():
-                raise FileNotFoundError(f"checkpoint not found / 找不到模型权重: {checkpoint}")
-            self.core = VisualSteeringCore(checkpoint, float(self.declare_parameter("steering_rate", 0.65).value))
-            self.bridge = CvBridge()
+            self.bridge = CvBridge() if CvBridge is not None else None
+            try:
+                self.core = VisualSteeringCore(
+                    checkpoint,
+                    float(self.declare_parameter("steering_rate", 0.65).value),
+                )
+            except (FileNotFoundError, RuntimeError) as error:
+                self.core = None
+                self.get_logger().warning(str(error))
             image_topic = str(self.declare_parameter("image_topic", "/front_rgb/image_raw").value)
             command_topic = str(self.declare_parameter("command_topic", "/cmd_vel").value)
             self.publisher = self.create_publisher(Twist, command_topic, 10)
             self.subscription = self.create_subscription(RosImage, image_topic, self.on_image, 10)
 
         def on_image(self, message: RosImage) -> None:
+            if self.core is None or self.bridge is None:
+                return
             image = Image.fromarray(self.bridge.imgmsg_to_cv2(message, desired_encoding="rgb8"))
             command = self.core.predict(image)
             twist = Twist()
@@ -83,7 +101,7 @@ if rclpy is not None:
 
 def ros_main() -> int:
     if rclpy is None:
-        raise RuntimeError("rclpy and cv_bridge are required for ROS 2 runtime / ROS 2 运行需要 rclpy 与 cv_bridge")
+        raise RuntimeError("rclpy is required for ROS 2 runtime / ROS 2 运行需要 rclpy")
     rclpy.init()
     node = VisualSteeringNode()
     try:
@@ -104,6 +122,8 @@ def replay_directory(checkpoint: Path, image_dir: Path) -> dict[str, object]:
 
 
 def main() -> int:
+    if rclpy is not None and "--ros-args" in sys.argv:
+        return ros_main()
     parser = argparse.ArgumentParser(description="Replay RGB images / 回放 RGB 图像")
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--images", type=Path, required=True)
@@ -114,5 +134,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
 
