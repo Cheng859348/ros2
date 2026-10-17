@@ -11,7 +11,13 @@ from pathlib import Path
 MODULE_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(MODULE_ROOT))
 
-from mujoco_abandoned_park_uav_visual_steering import SimulationConfig, UavSimulation
+from mujoco_abandoned_park_uav_visual_steering import (  # noqa: E402
+    DatasetConfig,
+    SimulationConfig,
+    UavSimulation,
+    collect_dataset,
+    inspect_dataset,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -23,10 +29,39 @@ def build_parser() -> argparse.ArgumentParser:
         )
     )
     parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        default=MODULE_ROOT / "models" / "weights" / "lightweight_steering_cnn.pt",
+        help="CNN checkpoint / CNN 模型权重",
+    )
+    parser.add_argument(
+        "--images",
+        type=Path,
+        help="replay image directory / 回放图像目录",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=("simulation", "collect", "quality", "train", "replay", "evaluate"),
+        default="simulation",
+        help="runtime mode / 运行模式",
+    )
+    parser.add_argument(
         "--config",
         type=Path,
         default=MODULE_ROOT / "config" / "simulation.yaml",
         help="simulation YAML / 仿真 YAML 配置",
+    )
+    parser.add_argument(
+        "--dataset-config",
+        type=Path,
+        default=MODULE_ROOT / "config" / "dataset.yaml",
+        help="dataset YAML / 数据集 YAML 配置",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=MODULE_ROOT / "data" / "park_rgb",
+        help="dataset output directory / 数据集输出目录",
     )
     parser.add_argument(
         "--model",
@@ -40,6 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=120,
         help="control steps / 控制步数",
     )
+    parser.add_argument("--epochs", type=_positive_int, default=8, help="training epochs / 训练轮数")
     parser.add_argument(
         "--steering",
         type=_unit_float,
@@ -54,6 +90,34 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         config = SimulationConfig.from_yaml(args.config.resolve())
+        if args.mode == "collect":
+            quality = collect_dataset(
+                config,
+                DatasetConfig.from_yaml(args.dataset_config.resolve()),
+                args.model.resolve(),
+                args.output,
+            )
+            print(json.dumps(quality, ensure_ascii=False, sort_keys=True))
+            return 0 if quality["status"] == "passed" else 3
+        if args.mode == "quality":
+            quality = inspect_dataset(args.output.resolve())
+            print(json.dumps(quality, ensure_ascii=False, sort_keys=True))
+            return 0 if quality["status"] == "passed" else 3
+        if args.mode == "train":
+            from train import train
+            result = train(args.output.resolve(), args.checkpoint.parent.resolve(), args.epochs)
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+            return 0
+        if args.mode == "replay":
+            if args.images is None:
+                raise ValueError("--images is required for replay / replay 模式需要 --images")
+            from ros_node import replay_directory
+            print(json.dumps(replay_directory(args.checkpoint.resolve(), args.images.resolve()), ensure_ascii=False, sort_keys=True))
+            return 0
+        if args.mode == "evaluate":
+            from evaluation import evaluate
+            print(json.dumps(evaluate(args.output.resolve()), ensure_ascii=False, sort_keys=True))
+            return 0
         simulation = UavSimulation(args.model.resolve(), config)
         for _ in range(args.steps):
             simulation.step(args.steering)
@@ -89,5 +153,4 @@ def _unit_float(text: str) -> float:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
 
