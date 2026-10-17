@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-import time
 from dataclasses import dataclass
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -47,7 +46,6 @@ class VisualSteeringCore:
         image = image.convert("RGB").resize((self.model.image_width, self.model.image_height))
         array = np.asarray(image, dtype=np.float32) / 255.0
         tensor = self.torch.from_numpy(array.transpose(2, 0, 1)).unsqueeze(0)
-        start = time.perf_counter()
         with self.torch.no_grad():
             probabilities = self.torch.softmax(self.model(tensor), dim=1)[0]
         index = int(probabilities.argmax().item())

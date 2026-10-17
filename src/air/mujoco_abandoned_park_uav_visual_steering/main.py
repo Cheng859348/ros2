@@ -29,8 +29,19 @@ def build_parser() -> argparse.ArgumentParser:
         )
     )
     parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        default=MODULE_ROOT / "models" / "weights" / "lightweight_steering_cnn.pt",
+        help="CNN checkpoint / CNN 模型权重",
+    )
+    parser.add_argument(
+        "--images",
+        type=Path,
+        help="replay image directory / 回放图像目录",
+    )
+    parser.add_argument(
         "--mode",
-        choices=("simulation", "collect", "quality"),
+        choices=("simulation", "collect", "quality", "train", "replay", "evaluate"),
         default="simulation",
         help="runtime mode / 运行模式",
     )
@@ -64,6 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=120,
         help="control steps / 控制步数",
     )
+    parser.add_argument("--epochs", type=_positive_int, default=8, help="training epochs / 训练轮数")
     parser.add_argument(
         "--steering",
         type=_unit_float,
@@ -91,6 +103,21 @@ def main(argv: list[str] | None = None) -> int:
             quality = inspect_dataset(args.output.resolve())
             print(json.dumps(quality, ensure_ascii=False, sort_keys=True))
             return 0 if quality["status"] == "passed" else 3
+        if args.mode == "train":
+            from train import train
+            result = train(args.output.resolve(), args.checkpoint.parent.resolve(), args.epochs)
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+            return 0
+        if args.mode == "replay":
+            if args.images is None:
+                raise ValueError("--images is required for replay / replay 模式需要 --images")
+            from ros_node import replay_directory
+            print(json.dumps(replay_directory(args.checkpoint.resolve(), args.images.resolve()), ensure_ascii=False, sort_keys=True))
+            return 0
+        if args.mode == "evaluate":
+            from evaluation import evaluate
+            print(json.dumps(evaluate(args.output.resolve()), ensure_ascii=False, sort_keys=True))
+            return 0
         simulation = UavSimulation(args.model.resolve(), config)
         for _ in range(args.steps):
             simulation.step(args.steering)
